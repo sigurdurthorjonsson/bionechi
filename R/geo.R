@@ -11,7 +11,7 @@ function(lat, lon, lat1 = NULL, lon1 = NULL)
     function(z) arcdist(lat[z], lon[z], lat1, lon1))
 }
 
-geoneighbour <-
+geoneighbourID <-
 function(lat, lon, lat1 = NULL, lon1 = NULL)
 {
   if(is.null(lat1)) {
@@ -23,6 +23,20 @@ function(lat, lon, lat1 = NULL, lon1 = NULL)
   z <- dist_mat(lat, lon, lat1, lon1)
   apply(z, 2, which.min)
 }
+
+nearest_neighbour_distance <-
+function(lat, lon, lat1 = NULL, lon1 = NULL)
+{
+  if(is.null(lat1)) {
+    lat1 <- lon$lat
+    lon1 <- lon$lon
+    lon <- lat$lon
+    lat <- lat$lat
+  }
+  z <- dist_mat(lat, lon, lat1, lon1)
+  apply(z, 2, min)
+}
+
 
 grid_route <-
 function(lat, lon) {
