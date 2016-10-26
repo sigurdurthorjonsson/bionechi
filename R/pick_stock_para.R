@@ -1,3 +1,21 @@
+#' Aggregate numbers and biomass of selected stock components
+#'
+#' @name pick_stock_para
+#' @param df A data frame/tibble with numbers and biomass by:
+#'
+#'   \itemize{
+#'     \item Area, \code{area}, 
+#'     \item Length, \code{l}, 
+#'     \item Age, \code{a} and
+#'     \item Maturity, \code{m}. 
+#'   }
+#' grouped by area.
+#' @return A data frame/tibble of the selected parameters as columns by area.
+#' @keywords arith
+#' 
+
+#' @export pick_stock_para
+#' @rdname pick_stock_para
 pick_stock_para <- function(df) {
   df %>%
     summarize(N = sum(nFish),

@@ -1,11 +1,31 @@
+#' Greatest lower bound.
+#'
+#' Finds index of greatest lower bound.
+#'
+#' @param x Numeric.
+#' @param y Numeric vector.
 glb <-
 function(x, y)
 max((1:length(y))[y < x])
 
+#' Least upper bound.
+#'
+#' Finds index of least upper bound.
+#'
+#' @param x Numeric.
+#' @param y Numeric vector.
 lub <-
 function(x, y)
 min((1:length(y))[y > x])
 
+#' Split a length distribution according to an age-length-key.
+#'
+#' Split a length distribution according to an age-length-key. Uses utilities
+#' \code{\link{lub}} and \code{\link{glb}} to establish an age distribution
+#' for lengths missing from the alk.
+#'
+#' @param Nl Named vector giving the length distribution.
+#' @param alk Named matrix age length key (length by age in spite of the name).
 make_my_age <-
 function(Nl, alk)
 {

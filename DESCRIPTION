@@ -1,8 +1,21 @@
 Package: bionechi
 Title: Utilities for calculations based on acoustic survey results
-Version: 0.1
+Version: 0.1-2
+Date: 2016-10-26
 Authors@R: "Sigurdur Thor Jonsson <sigurdur@hafro.is> [aut, cre]"
-Description: Collection of tools used in BIOmass and Numbers Estimation from ECho Integration 
-Depends: R (>= 3.1.1), geo
+Description: Collection of tools used in estimation of 
+  BIOmass and Numbers from ECho Integration
+Depends:
+    R (>= 3.1.1),
+    geo
 License: GPL (>= 2)
 LazyData: true
+RoxygenNote: 5.0.1
+Suggests: knitr,
+    rmarkdown,
+    dplyr,
+    parallel,
+    tidyr,
+    stringr,
+VignetteBuilder: knitr
+Imports: plotKML

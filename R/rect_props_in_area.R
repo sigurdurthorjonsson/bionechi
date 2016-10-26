@@ -1,3 +1,32 @@
+#' Given rect code, find area or proption rect area within a perimeter.
+#' 
+#' 
+#' 
+#' 
+#' @name rectWithin
+#' @aliases r_within_peri sr_within_peri mr_within_peri dr_within_peri
+#' @param r,sr,mr,dr Rectangle codes.
+#' @param peri Perimeter e.g. demarcating geographical distribution of fish.
+#' @param valueOut If \code{"p"} (the default) return proportion, 
+#'   else if \code{"A"} return area.
+#' @param scale If \code{valueOut} is \code{"area"}, 
+#'   \code{"nmi"} returns area in square nautical miles, 
+#'   otherwise \code{"km"} in square kilometers.
+#' @return 
+#' @note Not yet robust against rectangles outside the given perimeter
+#' @seealso \code{\link{deg2rect}}, \code{\link{rectArea}},
+#' \code{\link{geoarea}}.
+#' @keywords arith manip
+#' @examples
+#' 
+#'   geoplot(island, type = "n", grid = FALSE)
+#'   geolines(rPeri(468))
+#'   geolines(srPeri(4681))
+#'
+
+#' @export r_witin_peri
+#' @rdname rectWithin
+
 r_prop_in_area <- function(r, area, valueOut = "p", scale = "nmi") {
   if (!(scale == "nmi" | scale == "km")) 
     stop("Unit square nautical miles or kilometers only")
