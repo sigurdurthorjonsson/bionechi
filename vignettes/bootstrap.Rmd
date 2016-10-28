@@ -1,58 +1,336 @@
 ---
-title: "Vignette Title"
-author: "Vignette Author"
+title: "Bootstrap capelin survey"
+author: "SÞJ"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+    fig_caption: yes
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Bootstrap capelin survey}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+Vignette to document how capelin surveys have been bootstrapped according to a scheme described in [WKICE2015](http://ices.dk/sites/pub/Publication%20Reports/Expert%20Group%20Report/acom/2015/WKICE%202015/wkice_2015_final.pdf). Briefly, the method consists of the following:
 
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+- Find rectangle average NASC and multiply with rectangle area assumed to hold fish which gives echo abundance, `EA`.
+- Allocate the rectangle `EAs` and fish sampling stations to areas (or strata).
+- Bootstrap rectangle `EAs`, stations and fish on stations in parallel 10 thousand times, estimating the SSB and other stock parameters by area for each replicate.
+- Keep results for all areas along with the total for each replicate.
 
-## Vignette Info
+## Packages
 
-Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+Naturally, our package `bionechi`, out-commented pre-amble shows how to get from scratch. We use `dplyr`, `tidyr` from the so-called `tidyverse`, `stringr` as well for some string manipulation. For the bootstrap we go multi-core and use the base package `parallel`.
 
-## Styles
+```{r, echo=TRUE,message=FALSE}
+#install.packages("devtools", repos = "https://cran.hafro.is")
+#library(devtools)
+#install_github("sigurdurthorjonsson/bionechi")
 
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
+library(bionechi)
 
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
+library(dplyr) ; library(tidyr) ; library(stringr)
+## assume 4 cores are present, adjust as necessary
+library(parallel)
 
-## Figures
+```
+```{r, echo=FALSE, eval=FALSE,warning=FALSE}
+#install.packages("devtools", repos = "https://cran.hafro.is")
+#library(devtools)
+#install_github("sigurdurthorjonsson/bionechi")
 
-The figure sizes have been customised so that you can easily put two images side-by-side. 
+library(bionechi)
 
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
+library(dplyr) ; library(tidyr) ; library(stringr)
+## assume 4 cores are present, adjust as necessary
+library(parallel)
+
 ```
 
-You can enable figure captions by `fig_caption: yes` in YAML:
+## Data
 
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
+Data are `rdata` with rectangle echo abundance and `fishData` with fish biology allocated to areas, as prepared and documented in earlier bionechi-vignettes.
 
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
-
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
+```{r, echo=TRUE, results='asis'}
+#getwd()
+# when doing the vignette-thing find stuff relative to pkg/vignettes-dir
+rdata <- readRDS("../data/rdata.rds")
+fishData <- readRDS("../data/fishData.rds")
 ```
 
-Also a quote using `>`:
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+### Table input
+
+The first few lines of the two data sets used in the bootstrap are shown below. The rectangle data consist of `r` for the rectangle code for smáreitur/sr in this instance, `lodde` (in norwegian as it stands) is the rectangle averaga NASC, `n` is the number of 0.1 nmi bins within the rectangle, `p` ist the calculated proportion of the area within a perimeter set on the survey, `A` is the full area of the rectangle, `EA` is the product of the NASC, area and propotion of area assumed to hold fish, `EAfull` there for comparsion (to see the effect of reducing the proportion of the area of some retangles), and finally `area` is the area or stratum code:
+```{r, echo=TRUE, results='asis'}
+knitr::kable(head(rdata,5))
+```
+
+The fish data consist of `stod` or the station, `nr` number of fish in a sample (not used) `l` for length in cm, `w` the ungutted weight in grams, `s` is the sex (not used), `kt` (short for 'kynþroski') is the maturity stage, `a` is the age, `m` is a binary classification into immatures and matures, `TS` is the target strenght according to the relationsship TS = 19.1 * log(L) - 74.5, `sigma` is the back-scatterging cross section, and `area` is the area or stratum code.
+```{r, echo=TRUE, results='asis'}
+knitr::kable(head(fishData, 5))
+
+```
+
+
+## Method
+
+Set the number of replicates, one thousand in vignette, ten thousand in practice sofar. Set number of cores, here to that available on my machine, adjust down if necessary, possibly up if higher number of processors is available.
+```{r, echo=TRUE, results='asis'}
+nReps <- 1e3
+nCores <- 4
+```
+
+### The main boostrap in parallel
+
+We use `parallel::mclapply` to bootstrap the tables grouped by area. We break the operation down into logical steps below.
+
+Start the mclapply-call by distributing replicates on the available cores (i.e. 4 at a time in this case), return the list `bootResult` from the `mclapply`-call, `nReps` long.
+
+```{r, echo=TRUE, eval = FALSE, warning=FALSE}
+## do this in a multi-core lapply 
+bootResult <- mclapply(1:nReps, function(x) {
+```
+
+Use `dplyr::sample_frac` to pick rectangles at random with replacement within each area, and sum the boostrapped echo abundance by area. 
+```{r, echo=TRUE, results='asis', eval = FALSE}
+## bootstrap rectangle EA within areas and sum by area
+rdata %>%
+  group_by(area) %>%
+  sample_frac(size = 1, replace = TRUE) %>%
+  summarize(EA = sum(EA)) -> eaSum
+```
+
+Similarily, we pick fish on stations at random with replacement, for all stations (column name `stod`), hold in data frame `resampledFishData`.
+```{r, echo=TRUE, results='asis', eval = FALSE}
+## bootstrap fish on stations
+fishData %>%
+  group_by(stod) %>%
+  sample_frac(size = 1, replace = TRUE) -> resampledFishData
+```
+
+Each station typically has 100 capelin, we get the distinct station numbers, and pick at random with replacement within area, assign the station number we are going to use to `resampledStations`.
+```{r, echo=TRUE, results='asis', eval = FALSE}
+## bootstrap stations
+fishData %>%
+  select(area, stod) %>%
+  distinct() %>%
+  group_by(area) %>%
+  sample_frac(size = 1, replace = TRUE) -> resampledStations
+```
+
+Join the resampled stations to resampled fish, this is done within areas and by station.
+```{r, echo=TRUE, results='asis', eval = FALSE}
+## and use bootstrapped fish on the stations picked
+data <- left_join(resampledStations, resampledFishData, 
+  by = c("area", "stod"))
+```
+
+With the bootstrapped fish data we average the back-scatter within area, tally the fish we are using (note how this would work for unequal sample sizes), get the bootstrapped total `EA` by area, and finally prepare for disaggregating the total number by length, age and maturity. We use `dplyr::right_join` to add the constant values for areas to each fish in the samples. 
+```{r, echo=TRUE, results='asis', eval = FALSE}
+## average back-scatter and total EA by area
+data %>%
+  group_by(area) %>%
+  summarize(meanSigma = mean(sigma),
+    nSampled = n()) %>%
+  left_join(eaSum, by = "area") %>%
+  right_join(data, by = "area") -> data
+```
+
+Calculate the total number of fish within each area, distribute on the length, age and maturity groups according to bootstrapped sample composition in the areas (`nFish`), multiply by weigth to get the corresponding biomass (`bFish`), re-group by area, length, age and maturity before preparing a disaggregated summary, finally another re-group on the disAggregate in order to prepare the stage for picking stock parameters of interest in the next step. 
+```{r, echo=TRUE, results='asis', eval = FALSE}
+## find total number by area and distribute by length/age/maturity
+data %>% 
+  group_by(area) %>%
+  mutate(totNfish = EA/meanSigma,
+    nFish = totNfish/nSampled,
+    bFish = nFish*w) %>%
+  group_by(area, l, a, m) %>%
+  summarize(nFish = sum(nFish),
+    bFish = sum(bFish)) %>% group_by(area) -> bootAggr
+```
+
+Now we apply `bionechi::pick_stock_para` to get a selection of stock parameters out of object `bootAggr`, i.e.:
+
+- SSB, spawning stock biomass,
+- SSN, spawning stock numbers,
+- immN, immature numbers, 
+- immB, immature biomass, and for selected age groups 
+- immN{12} and immB{12}, numbers and biomass of age group 1 and 2 immatures,
+- SSB{234} and SSN{234}, numbers and biomass of age group 2, 3 and 4 in the spawning stock.
+```{r, echo=TRUE, results='asis', eval = FALSE}
+## pick a range of stock parameters, summarized in own bionechi-function 
+bootByArea <- pick_stock_para(bootAggr)
+```
+
+To the stock parameters we add the bootstrapped echo abundance by area.
+```{r, echo=TRUE, results='asis', eval = FALSE}
+## get the EA by area as well 
+bootByArea %>% 
+  right_join(eaSum, by = "area") -> bootByArea
+```
+
+Find the totals of replicated stock parameters and echo abundance.
+```{r, echo=TRUE, results='asis', eval = FALSE}
+## get the totals for all parameters
+bootByArea %>% 
+  summarize_all(sum, na.rm = TRUE) %>% 
+  mutate(area = "all") -> bootAll
+```
+
+Bind together results by area and the total result.
+```{r, echo=TRUE, results='asis', eval = FALSE}
+## bind the totals to the area results (in a sense a no-no, but handy here)
+bootByArea %>% mutate(area = as.character(area)) %>%
+  bind_rows(bootAll) -> bootBoth
+```
+
+Calculate proportions of selected stock parameters, tidy up the results by reshaping a wide data frame to a lean and mean three column result. This finishes off the multi-core lapply.  
+```{r, echo=TRUE, results='asis', eval = FALSE, warning = FALSE}
+## calculate a few proportions, tidy/wrangle the output also.
+## Note we keep zero entries for missing stock components.
+## since they may or may not be present in the bootstrap replicates.
+bootBoth %>%
+  mutate(pimmN1 = immN1/immN, pimmB1 = immB1/immB,
+    pimmN2 = immN2/immN, pimmB2 = immB2/immB,
+    pSSN2 = SSN2/SSN, pSSB2 = SSB2/SSB,
+    pSSN3 = SSN3/SSN, pSSB3 = SSB3/SSB,
+    pSSN4 = SSN4/SSN, pSSB4 = SSB4/SSB) %>%
+  gather(para, value, -area) %>%
+  mutate(value = ifelse(is.na(value), 0, value))
+}, mc.cores = nCores)
+```
+
+Now run all of the above in the background in a hidden chunk before we continue.
+
+```{r, echo = FALSE, results='asis', eval = TRUE}
+## do this in a multi-core lapply 
+bootResult <- mclapply(1:nReps, function(x) {
+
+## bootstrap rectangle EA within areas and sum by area
+
+rdata %>%
+  group_by(area) %>%
+  sample_frac(size = 1, replace = TRUE) %>%
+  summarize(EA = sum(EA)) -> eaSum
+
+## bootstrap fish on stations
+
+fishData %>%
+  group_by(stod) %>%
+  sample_frac(size = 1, replace = TRUE) -> resampledFishData
+
+## bootstrap stations
+
+fishData %>%
+  select(area, stod) %>%
+  distinct() %>%
+  group_by(area) %>%
+  sample_frac(size = 1, replace = TRUE) -> resampledStations
+
+## and use bootstrapped fish on the stations picked
+
+data <- left_join(resampledStations, resampledFishData, 
+  by = c("area", "stod"))
+
+## average back-scatter and total EA by area
+
+data %>%
+  group_by(area) %>%
+  summarize(meanSigma = mean(sigma),
+    nSampled = n()) %>%
+  left_join(eaSum, by = "area") %>%
+  right_join(data, by = "area") -> data
+
+## find total number by area and distribute by length/age/maturity
+
+data %>% 
+  group_by(area) %>%
+  mutate(totNfish = EA/meanSigma,
+    nFish = totNfish/nSampled,
+    bFish = nFish*w) %>%
+  group_by(area, l, a, m) %>%
+  summarize(nFish = sum(nFish),
+    bFish = sum(bFish)) %>% group_by(area) -> bootAggr
+
+## pick a range of stock parameters, summarized in own bionechi-function 
+
+bootByArea <- pick_stock_para(bootAggr)
+
+## get the EA by area as well 
+
+bootByArea %>% 
+  right_join(eaSum, by = "area") -> bootByArea
+
+## get the totals for all parameters
+
+bootByArea %>% 
+  summarize_all(sum, na.rm = TRUE) %>% 
+  mutate(area = "all") -> bootAll
+
+## bind the totals to the area results (in a sense a no-no, but handy here)
+
+bootByArea %>% mutate(area = as.character(area)) %>%
+  bind_rows(bootAll) -> bootBoth
+
+## calculate a few proportions, tidy/wrangle the output also.
+## Note we keep zero entries for missing stock components.
+## since they may or may not be present in the bootstrap replicates.
+
+bootBoth %>%
+  mutate(pimmN1 = immN1/immN, pimmB1 = immB1/immB,
+    pimmN2 = immN2/immN, pimmB2 = immB2/immB,
+    pSSN2 = SSN2/SSN, pSSB2 = SSB2/SSB,
+    pSSN3 = SSN3/SSN, pSSB3 = SSB3/SSB,
+    pSSN4 = SSN4/SSN, pSSB4 = SSB4/SSB) %>%
+  gather(para, value, -area) %>%
+  mutate(value = ifelse(is.na(value), 0, value))
+}, mc.cores = nCores)
+```
+
+### Steps after the bootstrap
+
+We bind the bootstrap replicate results together yielding a 3 by number of replicates by (nareas + 1) by number of parameters data frame, save in an rds-file if desired.
+```{r, echo=TRUE, results='asis'}
+bootResult <- bind_rows(bootResult)
+
+## 
+#saveRDS(bootResult, file = "bootResult.rds")
+## to read in, e.g.:
+## bootResult <- readRDS("bootResult.rds")
+```
+
+We scale the results for echo abundance to square kilometers (length to target strength (TS) to back-scatter relationships return back-scattering cross section in meters squared), biomass to thousands of tonnes (weights are given in grammes in the data base) and the numbers to billions. We use `stringr::str_detect` in an `ifelse` to pick parameters with names starting with the strings 'imm' or 'SS', i.e. of numbers or biomass either immature or from the spawning stock , so as to leave out parameter names starting with `p`, i.e. leave intact the proportions we choose to calculate. Save the bootstrap summary in an rds-file if desired.
+```{r, echo=TRUE, results='asis'}
+## summarize the results, scale to square kilometers
+## thousands of tonnes, billions of individuals
+## use 'stringr:str_detect' in 'ifelse' to apply appropriate scaling 
+
+bootResult %>%  
+  mutate(value = ifelse(para == "EA", value/1e6, value), 
+    value = ifelse(str_detect(para, "^imm"), value/1e9, value),
+    value = ifelse(str_detect(para, "^SS"), value/1e9, value)) %>%
+  group_by(area, para) %>% 
+  do(boot_stats(.$value)) -> bootSummary
+
+#saveRDS(bootSummary, file = "bootSummary.rds")
+```
+
+## Tables out
+
+We spool out the main results, more detail can be gotten by studying the saved `bootSumary`. 
+```{r, echo=TRUE, results='asis'}
+## spool out main results
+
+knitr::kable(bootSummary %>% filter(para == "EA") %>% 
+  select(area:pt50) %>% select(-pt25))
+
+knitr::kable(bootSummary %>% filter(para == "SSB") %>% 
+  select(area:pt50) %>% select(-pt25))
+```
+
+At this point, a traditional exclamation!
+```{r, echo=TRUE, results='asis'}
+print("Bittenú, húrra")
+```
+
