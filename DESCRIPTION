@@ -17,5 +17,6 @@ Suggests: knitr,
     parallel,
     tidyr,
     stringr,
-VignetteBuilder: knitr
-Imports: plotKML
+VignetteBuilder: rmarkdown
+Imports: plotKML,
+    geo

@@ -2,13 +2,11 @@
 title: "Bootstrap capelin survey"
 author: "SÞJ"
 date: "`r Sys.Date()`"
-output: 
-  rmarkdown::html_vignette:
-    fig_caption: yes
+output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Bootstrap capelin survey}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{rmarkdown::render}
+  \usepackage[utf8]{inputenc}
 ---
 
 Vignette to document how capelin surveys have been bootstrapped according to a scheme described in [WKICE2015](http://ices.dk/sites/pub/Publication%20Reports/Expert%20Group%20Report/acom/2015/WKICE%202015/wkice_2015_final.pdf). Briefly, the method consists of the following:
@@ -333,4 +331,3 @@ At this point, a traditional exclamation!
 ```{r, echo=TRUE, results='asis'}
 print("Bittenú, húrra")
 ```
-

@@ -9,7 +9,7 @@
 #' @param scale If \code{valueOut} is \code{"area"}, 
 #'   \code{"nmi"} returns area in square nautical miles, 
 #'   otherwise \code{"km"} in square kilometers.
-#' @return 
+#' 
 #' @note Not yet robust against rectangles outside the given perimeter. 
 #'   Destined for package \code{geo}?
 #' @seealso \code{\link{deg2rect}}, \code{\link{rectArea}},

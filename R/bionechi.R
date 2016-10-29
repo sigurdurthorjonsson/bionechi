@@ -7,6 +7,7 @@
 #' @name bionechi
 #' @docType package
 #' @import geo
+#' @import plotKML
 NULL
 
 #' Biological variables of 3300 capelin.
