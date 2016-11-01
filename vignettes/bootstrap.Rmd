@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Bootstrap capelin survey}
-  %\VignetteEngine{rmarkdown::render}
+  %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
 
@@ -75,7 +75,7 @@ knitr::kable(head(fishData, 5))
 
 Set the number of replicates, one thousand in vignette, ten thousand in practice sofar. Set number of cores, here to that available on my machine, adjust down if necessary, possibly up if higher number of processors is available.
 ```{r, echo=TRUE, results='asis'}
-nReps <- 1e3
+nReps <- 1e4
 nCores <- 4
 ```
 
