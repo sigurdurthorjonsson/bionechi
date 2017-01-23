@@ -24,6 +24,7 @@
 #'
 #' @param fishData data.frame of numbers and biomass by length and age
 #' @param nScale, bScale scaling factor, default one million
+#' @export tabulate_byla
 tabulate_byla <-
 function(fishData, nScale = 1e6, bScale = nScale) {
 # scale to millions and tonnes

@@ -25,6 +25,7 @@ Naturally, our package `bionechi`, out-commented pre-amble shows how to get from
 #library(devtools)
 #install_github("sigurdurthorjonsson/bionechi")
 
+# 'devtools::check notes this could be removed 
 library(bionechi)
 
 library(dplyr) ; library(tidyr) ; library(stringr)
@@ -76,7 +77,10 @@ knitr::kable(head(fishData, 5))
 Set the number of replicates, one thousand in vignette, ten thousand in practice sofar. Set number of cores, here to that available on my machine, adjust down if necessary, possibly up if higher number of processors is available.
 ```{r, echo=TRUE, results='asis'}
 nReps <- 1e3
-nCores <- 4
+# set to one since devtools::check complains about:
+#   spawning simultaneous processes, 
+# consider increasing when extra processores are available
+nCores <- 1
 ```
 
 ### The bootstrap in parallel

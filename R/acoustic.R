@@ -50,6 +50,7 @@
 NULL
 
 #' @rdname acoustic
+#' @export le2ts
 le2ts <- function(le, species, dead = 0)
 {
 	sp <- c(1, 2, 5, 30, 31, 34)
@@ -60,6 +61,7 @@ le2ts <- function(le, species, dead = 0)
 }
 
 #' @rdname acoustic
+#' @export ts2sigma
 ts2sigma <- function(ts, type = "sp")
   switch(type,
     sp = 4. * pi * 10.^(0.1 * ts),

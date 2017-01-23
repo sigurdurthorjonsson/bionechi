@@ -3,11 +3,11 @@ function(x, nBoots = 1000) {
   replicates <- sapply(1:nBoots, 
     function(y, x) sum(sample(x, replace = TRUE)), x = x)
   list(obs = sum(x), 
-    med = median(replicates), 
+    med = stats::median(replicates), 
     mean = mean(replicates), 
-    low = quantile(replicates, .05), 
-    hi = quantile(replicates, .95), 
-    cv = sqrt(var(replicates))/mean(replicates))
+    low = stats::quantile(replicates, .05), 
+    hi = stats::quantile(replicates, .95), 
+    cv = sqrt(stats::var(replicates))/mean(replicates))
 }
 #' Compute summary stats of a bootstrap vector
 #'
@@ -21,17 +21,17 @@ function(x, nBoots = 1000) {
 #'   boot_stats(x)
 #' 
 
-#' @export boot_stats
 #' @rdname boot_stats
+#' @export boot_stats
 boot_stats <-
 function (x) 
 {
     bootMean <- mean(x)
     names(bootMean) <- "mean"
-    quasiCV <- sqrt(var(x))/bootMean
+    quasiCV <- sqrt(stats::var(x))/bootMean
     names(quasiCV) <- "CV"
-    bootQuants <- quantile(x, c(0.05, 0.25, 0.5, 0.75, 0.95))
-    setNames(data.frame(t(c(bootMean, quasiCV, bootQuants))),
+    bootQuants <- stats::quantile(x, c(0.05, 0.25, 0.5, 0.75, 0.95))
+    stats::setNames(data.frame(t(c(bootMean, quasiCV, bootQuants))),
       c("mean", "CV", paste0(rep("pt", 5), c(5, 25, 50, 75, 95))))
 }
 
@@ -48,8 +48,8 @@ function (x)
 #'   pool_estimates(ests, CVs)
 #' 
 
+#' @rdname pool_estimates
 #' @export pool_estimates
-#'@rdname pool_estimates
 pool_estimates <- function(estimates, CVs) {
   if(length(estimates) != length(CVs)) 
     stop("Equal number of CVs and means required")

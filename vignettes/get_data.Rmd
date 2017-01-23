@@ -1,19 +1,188 @@
 ---
-title: "Vignette Title"
-author: "Vignette Author"
+title: "Get data from DB"
+author: "SÞJ"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Get data from DB}
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+  \usepackage[utf8]{inputenc}
 ---
 
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+On survey, fish biology data are collected with the MFRI system
+`HafVog` (sometimes also referred to with the english monicker
+`SeaScale`) and stored in a local data base (DB) but are then
+incorporated in the institute's main DB after the survey. Here we show
+an example of how such data are extracted from the hafvog-scheme at
+the institute on Skúlagata, but also show the minor modifications
+needed to address an appropriate DB on survey. Further, since there
+are more ways then one to access MFRI-DBs from R, we show two
+alternative angles of attack.
 
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+## DB access
+
+We start with the package `ROracle` (and `DBI` implicitly) and
+deliberately use explicit set up of the DB-connection. Although more
+low-level than using the much used (at MFRI) package `ora`, in a way a
+wrapper around `ROracle`, our approach better illustrates the choice
+of DB that must be made on board (when scientists are removed from the
+office), and must also be changed on-shore after the survey if
+analysis is to be repeated there in the aftermath of the survey.
+
+Currently, we have to authenicate us. Here we use (and distribute) the
+user and password combination of 'a databrowsing user' that is
+generally set up for the the HafVog/SeaScale-DBs (and shown in the
+manual for the system):
+
+```{r, echo = TRUE, message = FALSE}
+##library(ROracle)
+##con <- dbConnect(dbDriver('Oracle'))
+## previously it was necessary to authenticate e.g. with:
+##
+## user = 'hafvog_user', password = 'hafvog', dbname = 'mar')
+## or:
+## user = 'gagnasja', password = 'gagnasja', dbname = 'xe')
+## 
+## note that we would like a user/pass authentication 
+## pair available on every installed HafVog and open for distribtution
+## or alternatively the default user would have access to the hafvog-scheme
+## dbname = 'xe') 
+## on a machine with a local Oracle Extended Editoin receiving data from HafVog
+## depending on setups, the user/pass combination could be skipped
+## Further the hafvog manual mentions attempting:
+## dbname = 'localhost:1521/xe') may be necessary
+```
+
+We collect station information in one query:
+
+```{r, echo = TRUE, message = FALSE}
+##stations <- dbGetQuery(con, "
+##  select a.synis_id, stod, dags, 
+##    to_char(togbyrjun,'yyyy-mm-dd HH24:MM:SS') upphaf, 
+##    to_char(togendir,'yyyy-mm-dd HH24:MM:SS') endir,
+##    dypi_hift, dypi_kastad, togdypi_hift, togdypi_kastad, 
+##    vir_uti, larett_opnun, lodrett_opnun, grandaralengd,
+##    togtimi, toglengd, toghradi,
+##    kastad_n_breidd, kastad_v_lengd, hift_n_breidd, hift_v_lengd 
+##  from hafvog.stodvar a, hafvog.togstodvar b
+##  where a.synis_id = b.synis_id
+##    and leidangur in ('A1-2016')
+##  order by stod")
+# change names to lowercase
+##names(stations) <- casefold(names(stations))
+```  
+
+and the fish biology information in another, renaming the fields
+according to the following scheme:
+
+- a age
+- l length
+- w weight
+- s sex
+- kt maturity stage (acronymming the Icelandic term `kynthroski`)
+
+```{r, echo = TRUE, message = FALSE}
+# Kvarnir
+##fishData <- dbGetQuery(con, "
+##  select a.synis_id, stod, nr, lengd l, aldur a, 
+##    oslaegt w, kyn s, kynthroski kt
+##  from hafvog.stodvar a, hafvog.kvarnir b
+##  where a.synis_id = b.synis_id 
+##    and leidangur in ('A1-2016') and tegund = 31
+##  order by stod, nr")
+##names(fishData) <- casefold(names(fishData))
+```
+
+A bit of data manipulation is necessary, we need to:
+
+- change to decimal degrees,
+
+- determine split of fish into mature and immature according to
+  maturity staging in field `kynthroski` (stage 1 and 2 immature,
+  assume also fish were immature if maturity state is missing, all
+  others mature),
+
+- get the proportion mature at each station, and
+
+- skip fish where age determination was missing (admittedly a bit
+  sloppy, but this is usually only a fish or two).
+
+```{r, echo = TRUE, message = FALSE}
+##library(geo)
+# convert to decimal degrees
+##stations$lat1 <- geoconvert(stations$kastad_n_breidd)
+##stations$lon1 <- -geoconvert(stations$kastad_v_lengd)
+##stations$lat2 <- geoconvert(stations$hift_n_breidd)
+##stations$lon2 <- -geoconvert(stations$hift_v_lengd)
+## find midpoint of tow
+##stations$lat <- (stations$lat1 + stations$lat2)/2
+##stations$lon <- (stations$lon1 + stations$lon2)/2
+# maturity categorisation
+##fishData$m <- ifelse(fishData$kt %in% c(NA, 1, 2), 0, 1)
+# skip those with missing age
+##id <- which(is.na(fishData$a))
+##fishData <- fishData[-id,]
+```
+
+Optionally, output to a file:
+
+```{r, echo = TRUE, message = FALSE}
+# saveRDS(stations, file = "../data/stations_0.rds")
+# saveRDS(fishData, file = "../data/fishData_0.rds")
+```
+Finally, exit cleanly
+
+```{r, echo = TRUE, message = FALSE}
+##dbDisconnect(con)
+```
+
+## More ways than one to skin a cat
+
+The github-package `fishvice/mar`, which provides functionality on top
+of dplyr and dplyrOracle connection to a DB, was introduced to
+haf_og_vatn/MFRI in November 2016.
+
+Although it may not be available for all users and setups yet (e.g. on
+board resarch vesselss, or collected with HafVog on commercial
+vessels, port sampling from the branches, ...), we now show how this
+approach can be used and how it can recuce the verbosity of our code.
+
+Similar to before we set up a connection to the DB, in this case the
+standard Skúlagata-DB (we make use of functionality built into `mar`
+and utilities newly built into our Oracle DB:
+
+```{r, echo = TRUE, message = FALSE}
+##library(dplyr)
+##library(dplyrOracle)
+##library(mar)
+##mar <- src_oracle('mar')
+```
+
+We can either query the fiskar or hafvog versions of the data, we start with the final destination of the data, it is loaded onto schema fiskar, and the mar packages 
+```{r, echo = TRUE, message = FALSE}
+##lesa_stodvar(mar) %>%
+##  filter(leidangur == 'A1-2016') %>%
+##  select(synis_id, stod, dags, 
+##    togbyrjun, togendir, togtimi, toglengd, toghradi,
+##    kastad_n_breidd, kastad_v_lengd,
+##    hift_n_breidd, hift_v_lengd) %>%
+##  mutate(lat1 = geoconvert1(kastad_n_breidd),
+##    lon1 = -geoconvert1(kastad_v_lengd),
+##    lat2 = geoconvert1(hift_n_breidd),
+##    lon2 = -geoconvert1(hift_v_lengd)) %>%
+##  collect() %>%
+##  mutate(lat = (lat1 + lat2)/2,
+##    lon = (lon1 + lon2)/2) -> stations2
+```  
+
+```{r, echo = TRUE, message = FALSE}
+# Kvarnir
+##lesa_kvarnir(mar) %>%
+##  filter(tegund == 31) %>%
+##  collect(n=Inf) %>%
+##  right_join(stations, by = "synis_id") -> fishData2
+```
+
 
 ## Vignette Info
 
