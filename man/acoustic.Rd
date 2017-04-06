@@ -78,6 +78,6 @@ NASC/mean(sigmas)/1e6
 \references{
 MacLennan, D. N., Fernandes, P. G., and Dalen, J. 2002. 
 A consistent approach to definitions and symbols in fisheries acoustics. 
-ICES Journal of Marine Science, 59: 365–369.
+ICES Journal of Marine Science, 59: 365-369.
 }
 

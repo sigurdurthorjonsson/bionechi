@@ -30,8 +30,9 @@ and Blue Whiting and the North Western Working Groups of ICES
 as well as in survey reports.
 }
 \examples{
-data(fishData)
+\dontrun{data(fishData)
 tabulate_byla(fishData)
+}
 
 }
 

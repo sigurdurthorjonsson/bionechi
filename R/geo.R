@@ -1,5 +1,12 @@
-dist_mat <-
-function(lat, lon, lat1 = NULL, lon1 = NULL)
+#' Create distance matrix between two sets of positions with 'geo::arcdist'.
+#'
+#' @name dist_mat
+#' @param lat, lon, lat1, lon1 Positions according to the 'geo' paradigm.
+#' @keywords arith
+#' @rdname dist_mat
+#' @export dist_mat
+#' 
+dist_mat <- function(lat, lon, lat1 = NULL, lon1 = NULL)
 {
   if (is.null(lat1)) {
     lat1 <- lon$lat
@@ -11,8 +18,15 @@ function(lat, lon, lat1 = NULL, lon1 = NULL)
     function(z) arcdist(lat[z], lon[z], lat1, lon1))
 }
 
-geoneighbourID <-
-function(lat, lon, lat1 = NULL, lon1 = NULL)
+#' For two sets of postions, find index of closest in second set to each in first with 'geo::dist_mat'.
+#' 
+#' @name geoneighbourID
+#' @param lat, lon, lat1, lon1 Positions according to the 'geo' paradigm.
+#' @keywords arith
+#' @rdname geoneighbourID
+#' @export geoneighbourID
+
+geoneighbourID <- function(lat, lon, lat1 = NULL, lon1 = NULL)
 {
   if(is.null(lat1)) {
     lat1 <- lon$lat
@@ -24,6 +38,14 @@ function(lat, lon, lat1 = NULL, lon1 = NULL)
   apply(z, 2, which.min)
 }
 
+#' For two sets of postions, find closest distance to a pos in second set for each in first with 'geo::dist_mat'.
+#' 
+#' @name nearest_neighbour_distance
+#' @param lat, lon, lat1, lon1 Positions according to the 'geo' paradigm.
+#' @keywords arith
+#' @rdname nearest_neighbour_distance
+#' @export nearest_neighbour_distance
+ 
 nearest_neighbour_distance <-
 function(lat, lon, lat1 = NULL, lon1 = NULL)
 {

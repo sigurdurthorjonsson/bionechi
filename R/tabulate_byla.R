@@ -19,9 +19,10 @@
 #' as well as in survey reports.
 #'
 #' @examples
-#' data(fishData)
+#' \dontrun{data(fishData)
 #' tabulate_byla(fishData)
-#'
+#' }
+#' 
 #' @param fishData data.frame of numbers and biomass by length and age
 #' @param nScale, bScale scaling factor, default one million
 #' @export tabulate_byla

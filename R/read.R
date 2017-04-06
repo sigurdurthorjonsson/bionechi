@@ -1,3 +1,19 @@
+#' Read BI500 Report.CompactTable
+#'
+#' @name read_compact_table
+#' @param report Report name, defaults to 'Report.CompactTables'.
+#' @keywords manip
+#' @examples
+#' 
+#'   
+#' \dontrun{
+#'   filename <- "/u2/reikn/Tac/2011/31-capelin/winterCapelin/gildi/2011/A01/Report.CompactTables"
+#'   a01 <- read_compact_table(filename)
+#' }
+
+#' @rdname read_compact_table
+#' @export read_compact_table
+ 
 read_compact_table <- 
   function (report = "report.CompactTables", species = "CAPEL")
 {
