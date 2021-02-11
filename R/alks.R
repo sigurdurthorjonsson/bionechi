@@ -1,61 +1,88 @@
-#' Greatest lower bound.
+#' Make age-length key (alk)
 #'
-#' Finds index of greatest lower bound.
+#' Given fish data with age and length, tablulate and prepare an age-length key
 #'
-#' @param x Numeric.
-#' @param y Numeric vector.
-glb <-
-function(x, y)
-max((1:length(y))[y < x])
+#' @param alk_data Data frame with biological data from a set
+#'   of trawl samples to be used as basis for the age-length key.
+#' @details First implementation bin-ns the lengths on the centimeter below.
+#' @keywords alk
+#' @return An alk-tibble
+#' @export
+#' @examples
+#' \dontrun{fishData %>%
+#'   filter(!is.na(a)) -> alk_data
+#' alk <- make_alk(alk_data)
+#'   }
 
-#' Least upper bound.
-#'
-#' Finds index of least upper bound.
-#'
-#' @param x Numeric.
-#' @param y Numeric vector.
-lub <-
-function(x, y)
-min((1:length(y))[y > x])
-
-#' Split a length distribution according to an age-length-key.
-#'
-#' Split a length distribution according to an age-length-key. Uses utilities
-#' \code{\link{lub}} and \code{\link{glb}} to establish an age distribution
-#' for lengths missing from the alk.
-#'
-#' @param Nl Named vector giving the length distribution.
-#' @param alk Named matrix age length key (length by age in spite of the name).
-make_my_age <-
-function(Nl, alk)
-{
-        alk <- sweep(alk, 1., apply(alk, 1., sum), "/")
-        aged.lengths <- as.numeric(dimnames(alk)[[1.]])
-        n.aged.l <- length(aged.lengths)
-        obs.lengths <- as.numeric(names(Nl))
-        n.obs.l <- length(obs.lengths)
-        newalk <- matrix(nrow = length(obs.lengths), ncol = ncol(alk))
-        dimnames(newalk) <- list(obs.lengths, dimnames(alk)[[2.]])
-        for(i in seq(along = obs.lengths)) {
-                x <- obs.lengths[i]
-                if(is.na(match(x, aged.lengths))) {
-                        if(x < min(aged.lengths))
-                                newalk[i,  ] <- alk[1.,  ]
-                        else {
-                                if(x > max(aged.lengths))
-                                        newalk[i,  ] <- alk[n.aged.l,  ]
-                                else {
-                                        id.a <- glb(x, aged.lengths)
-                                        id.b <- lub(x, aged.lengths)
-                                        a <- aged.lengths[id.a]
-                                        b <- aged.lengths[id.b]
-                                        newalk[i,  ] <- ((b - x)/(b - a)) *
-                                                alk[id.a,  ] + ((x - a)/(b -
-                                                a)) * alk[id.b,  ]
-                                }
-                        }
-                }
-                else newalk[i,  ] <- alk[match(x, aged.lengths),  ]
-        }
-        Nl * newalk
+make_alk <- function(alk_data) {
+  alk_data %>%
+    dplyr::group_by(l,a) %>%   
+    dplyr::summarize(n=n()) %>%
+    dplyr::right_join(alk_data %>%
+      dplyr::group_by(l) %>%
+      dplyr::summarize(n=n()),by="l") %>%
+    dplyr::mutate(p=n.x/n.y) %>%
+    dplyr::group_by(l) %>%
+    dplyr::mutate(cump=cumsum(p))
 }
+
+#' Predict age
+#'
+#' Given fish length, predict age from empirical age group propotions.
+#'
+#' @param l Fish length
+#' @param alk An alk-tibble with cum age group props by length
+#' @details For a single fish at a time, used inside a 'purrr::map_dbl'-call
+#' @keywords alk
+#' @return Stochastic age
+#' @export
+#' @examples
+#' \dontrun{fishData %>%
+#'   filter(!is.na(a)) -> alk_data
+#' alk <- make_alk(alk_data)
+#' set.sed(2345)
+#' predict_age(15,alk)
+#' predict_age(15,alk)
+#' set.seed(2345)
+#' predict_age(15,alk)
+#' purrr::map_dbl(9:19,predict_age,alk=alk)
+#'   }
+
+predict_age <- function(l,alk) {
+  draw <- runif(1)
+  if(l>max(alk$l)) l <- max(alk$l)
+  if(l<min(alk$l)) l <- min(alk$l)
+  tibble(l=l) %>%
+    dplyr::left_join(alk,by="l") %>%
+    dplyr::filter(cump > draw) %>%
+    dplyr::pull(a) %>%
+    first() 
+}
+
+#' Fix missing age.
+#'
+#' Given a set of observations of fish length and age, some ages missing,
+#' predict the missing once from observed age group proportions by length.
+#'
+#' @param fishData A data frame of observations of fish in otolith sample
+#'   with columns 'l' for length and 'a' for age.
+#' @keywords age, length
+#' @export
+#' @examples
+#' \dontrun{
+#'   fishData <- fix_missing_age(fishData)
+#'   }
+
+fix_missing_age <- function(fishData) {
+  fishData <- split(fishData, is.na(fishData$a))
+  fishData[[1]] %>%
+    dplyr::mutate(l = floor(l)) -> alk_data
+  alk <- make_alk(alk_data)
+  fishData[[2]] %>%
+    dplyr::mutate(a = purrr::map_dbl(floor(l),
+      predict_age, alk = alk)) -> fishData[[2]]
+  bind_rows(fishData)
+}
+
+
+

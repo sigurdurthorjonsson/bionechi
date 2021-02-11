@@ -1,16 +1,24 @@
 Package: bionechi
 Title: Utilities for analysis of acoustic survey results.
-Version: 0.1-5
-Date: 2016-04-06
-Authors@R: "Sigurdur Thor Jonsson <sigurdur@hafro.is> [aut, cre]"
+Version: 0.2-0
+Date: 2021-02-11
+Authors@R:
+  c(person(given = "Sigurdur Thor",
+           family = "Jonsson",
+           role = c("aut", "cre"),
+           email = "sigurdur@hafro.is",
+           comment = c(ORCID = "0000-0001-5550-0326")))
 Description: Collection of tools used in estimation of 
   BIOmass and Numbers from ECho Integration.
 Depends:
     R (>= 3.1.1),
-    geo
-License: GPL (>= 2)
+    geo,
+    tidyverse
+Imports: plotKML, dplyr, purrr, tidyr, magrittr
+License: GPL-3
+Encoding: UTF-8
 LazyData: TRUE
-RoxygenNote: 5.0.1
+RoxygenNote: 7.1.1
 Suggests: knitr,
     rmarkdown,
     parallel,
@@ -19,5 +27,3 @@ Suggests: knitr,
     ROracle,
     DBI
 VignetteBuilder: knitr
-Imports: plotKML,
-    dplyr

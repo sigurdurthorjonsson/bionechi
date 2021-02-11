@@ -3,11 +3,9 @@
 \docType{package}
 \name{bionechi}
 \alias{bionechi}
-\alias{bionechi-package}
 \title{bionechi}
 \description{
 A collection of functions having to do with acoustics and
 estimation of numbers and biomass and presentation of results
 from acoustic surveys as performed at the MRI, Reykjvik, Iceland.
 }
-

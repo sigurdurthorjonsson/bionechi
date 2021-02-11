@@ -35,4 +35,3 @@ tabulate_byla(fishData)
 }
 
 }
-

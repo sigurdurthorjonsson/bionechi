@@ -23,4 +23,3 @@ A rough gauge of the combination of repeat coverages
 
 }
 \keyword{arith}
-

@@ -4,7 +4,9 @@
 \name{rep}
 \alias{rep}
 \title{NASC in 0.1 nmi bins/EDSUs.}
-\format{A data frame with 34352 rows and 11 variables}
+\format{
+A data frame with 34352 rows and 11 variables
+}
 \source{
 MRI, to be made available at \url{http://data.hafro.is/acoustics}
 }
@@ -26,4 +28,3 @@ in 0.1 nautical mile (nmi) bins.
 }
 }
 \keyword{datasets}
-

@@ -13,4 +13,3 @@ dist_mat(lat, lon, lat1 = NULL, lon1 = NULL)
 Create distance matrix between two sets of positions with 'geo::arcdist'.
 }
 \keyword{arith}
-

@@ -3,12 +3,12 @@
 \name{acoustic}
 \alias{acoustic}
 \alias{le2ts}
+\alias{ts2sigma}
+\alias{ts2le}
+\alias{sigma2ts}
+\alias{z_le2ts}
 \alias{sA2sa}
 \alias{sV2sv}
-\alias{sigma2ts}
-\alias{ts2le}
-\alias{ts2sigma}
-\alias{z_le2ts}
 \title{Acoustic calculations}
 \usage{
 le2ts(le, species, dead = 0)
@@ -80,4 +80,3 @@ MacLennan, D. N., Fernandes, P. G., and Dalen, J. 2002.
 A consistent approach to definitions and symbols in fisheries acoustics. 
 ICES Journal of Marine Science, 59: 365-369.
 }
-

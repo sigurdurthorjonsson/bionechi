@@ -24,4 +24,3 @@ A data frame/tibble of the selected parameters as columns by area.
 Aggregate numbers and biomass of selected stock components
 }
 \keyword{arith}
-

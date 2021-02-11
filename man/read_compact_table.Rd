@@ -21,4 +21,3 @@ Read BI500 Report.CompactTable
 }
 }
 \keyword{manip}
-

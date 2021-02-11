@@ -13,4 +13,3 @@ geoneighbourID(lat, lon, lat1 = NULL, lon1 = NULL)
 For two sets of postions, find index of closest in second set to each in first with 'geo::dist_mat'.
 }
 \keyword{arith}
-

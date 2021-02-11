@@ -22,4 +22,3 @@ Compute summary stats of a bootstrap vector
 
 }
 \keyword{arith}
-

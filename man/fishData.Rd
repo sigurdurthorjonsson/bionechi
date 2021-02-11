@@ -4,7 +4,9 @@
 \name{fishData}
 \alias{fishData}
 \title{Biological variables of 3300 capelin.}
-\format{A data frame with 3297 rows and 14 variables}
+\format{
+A data frame with 3297 rows and 14 variables
+}
 \source{
 MRI, to be made available at \url{http://data.hafro.is/acoustics}
 }
@@ -36,4 +38,3 @@ The variables are as follows:
 }
 }
 \keyword{datasets}
-

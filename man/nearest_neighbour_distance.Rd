@@ -13,4 +13,3 @@ nearest_neighbour_distance(lat, lon, lat1 = NULL, lon1 = NULL)
 For two sets of postions, find closest distance to a pos in second set for each in first with 'geo::dist_mat'.
 }
 \keyword{arith}
-
