@@ -1,7 +1,7 @@
 Package: bionechi
-Title: Utilities for analysis of acoustic survey results.
+Title: Utilities for analysis of acoustic survey results
 Version: 0.2-0
-Date: 2021-02-11
+Date: 2021-09-22
 Authors@R:
   c(person(given = "Sigurdur Thor",
            family = "Jonsson",
