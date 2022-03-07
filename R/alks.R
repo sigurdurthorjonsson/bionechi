@@ -74,6 +74,7 @@ predict_age <- function(l,alk) {
 #'   }
 
 fix_missing_age <- function(fishData) {
+  if(!any(is.na(fishData$a))) return(fishData)
   fishData <- split(fishData, is.na(fishData$a))
   fishData[[1]] %>%
     dplyr::mutate(l = floor(l)) -> alk_data
