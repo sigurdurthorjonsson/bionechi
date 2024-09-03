@@ -1,7 +1,7 @@
 Package: bionechi
 Title: Utilities for analysis of acoustic survey results
-Version: 0.3-1
-Date: 2023-01-17
+Version: 0.4-1
+Date: 2024-09-03
 Authors@R:
   c(person(given = "Sigurdur Thor",
            family = "Jonsson",
@@ -14,16 +14,14 @@ Depends:
     R (>= 3.1.1),
     geo,
     tidyverse
-Imports: plotKML, dplyr, purrr, magrittr
+Imports: sf, dplyr, purrr, magrittr
 License: GPL-3
 Encoding: UTF-8
 LazyData: TRUE
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Suggests: knitr,
     rmarkdown,
     parallel,
     tidyr,
-    stringr,
-    ROracle,
-    DBI
+    stringr
 VignetteBuilder: knitr

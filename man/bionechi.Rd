@@ -2,10 +2,15 @@
 % Please edit documentation in R/bionechi.R
 \docType{package}
 \name{bionechi}
+\alias{bionechi-package}
 \alias{bionechi}
 \title{bionechi}
 \description{
 A collection of functions having to do with acoustics and
 estimation of numbers and biomass and presentation of results
 from acoustic surveys as performed at the MRI, Reykjvik, Iceland.
+}
+\author{
+\strong{Maintainer}: Sigurdur Thor Jonsson \email{sigurdur@hafro.is} (\href{https://orcid.org/0000-0001-5550-0326}{ORCID})
+
 }
