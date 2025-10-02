@@ -1,7 +1,7 @@
 Package: bionechi
 Title: Utilities for analysis of acoustic survey results
-Version: 0.4-1
-Date: 2024-09-03
+Version: 2025.10.02
+Date: 2025-10-02
 Authors@R:
   c(person(given = "Sigurdur Thor",
            family = "Jonsson",
@@ -11,14 +11,14 @@ Authors@R:
 Description: Collection of tools used in estimation of 
   BIOmass and Numbers from ECho Integration.
 Depends:
-    R (>= 3.1.1),
+    R (>= 4.1),
     geo,
     tidyverse
 Imports: sf, dplyr, purrr, magrittr
 License: GPL-3
 Encoding: UTF-8
 LazyData: TRUE
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.3
 Suggests: knitr,
     rmarkdown,
     parallel,
