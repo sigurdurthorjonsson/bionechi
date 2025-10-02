@@ -7,7 +7,7 @@
 
 read_luf3 <- function(rep_file) {
   rep_file %>%
-    readr::read_csv(show_col_types=FALSE) %>%
+    readr::read_csv(show_col_types=FALSE, comment="%") %>%
     dplyr::select_all(tolower) %>%
     dplyr::rename(lon = longitude, 
          lat = latitude) %>%
